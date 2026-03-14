@@ -750,6 +750,315 @@ def get_batch_stock(item_name: str, warehouse: str = None) -> dict:
 
 
 @mcp.tool(annotations={"readOnlyHint": True})
+def get_stock_additions(item_name: str, warehouse: str = None, period: str = "this_month") -> dict:
+    """Get all stock inbound transactions (additions) for an item — purchases, receipts, returns.
+
+    Use when asked how many units of an item were added, received, or restocked
+    at a specific warehouse over a period. Shows voucher type so you can see
+    if it came from a Purchase Receipt, Stock Entry, or Sales Return.
+
+    Args:
+        item_name: Partial or full item name or item code.
+        warehouse: Specific warehouse name (partial match). Optional — omit for all warehouses.
+        period: One of: today, yesterday, this_week, this_month, last_month, this_year. Defaults to this_month.
+    """
+    start, end = get_date_range(period)
+    items = _resolve_item(item_name, limit=3)
+    if not items:
+        return {"error": f"No items found matching '{item_name}'"}
+
+    item_codes = [i["name"] for i in items]
+    wh_condition = "AND sle.warehouse LIKE %(warehouse)s" if warehouse else ""
+    params = {
+        "codes": item_codes,
+        "start": start,
+        "end": end,
+        **({"warehouse": f"%{warehouse}%"} if warehouse else {}),
+    }
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            sle.item_code,
+            sle.item_name,
+            sle.warehouse,
+            sle.posting_date,
+            sle.actual_qty AS qty_added,
+            sle.qty_after_transaction,
+            sle.voucher_type,
+            sle.voucher_no,
+            sle.stock_value
+        FROM `tabStock Ledger Entry` sle
+        WHERE sle.item_code IN %(codes)s
+          AND sle.actual_qty > 0
+          AND sle.posting_date BETWEEN %(start)s AND %(end)s
+          AND sle.is_cancelled = 0
+          {wh_condition}
+        ORDER BY sle.posting_datetime DESC
+        LIMIT 50
+        """,
+        params,
+        as_dict=True,
+    )
+    total_added = sum(r["qty_added"] or 0 for r in rows)
+    return {
+        "item_filter": item_name,
+        "warehouse_filter": warehouse,
+        "period": period,
+        "from": str(start),
+        "to": str(end),
+        "additions": rows,
+        "count": len(rows),
+        "total_qty_added": total_added,
+    }
+
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_stock_issues(item_name: str, warehouse: str = None, period: str = "this_month") -> dict:
+    """Get all stock outbound transactions (issues) for an item — sales, consumption, transfers out.
+
+    Use when asked how many units were sold, consumed, issued, or removed
+    from a warehouse, and what voucher type caused the reduction.
+
+    Args:
+        item_name: Partial or full item name or item code.
+        warehouse: Specific warehouse name (partial match). Optional.
+        period: One of: today, yesterday, this_week, this_month, last_month, this_year. Defaults to this_month.
+    """
+    start, end = get_date_range(period)
+    items = _resolve_item(item_name, limit=3)
+    if not items:
+        return {"error": f"No items found matching '{item_name}'"}
+
+    item_codes = [i["name"] for i in items]
+    wh_condition = "AND sle.warehouse LIKE %(warehouse)s" if warehouse else ""
+    params = {
+        "codes": item_codes,
+        "start": start,
+        "end": end,
+        **({"warehouse": f"%{warehouse}%"} if warehouse else {}),
+    }
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            sle.item_code,
+            sle.item_name,
+            sle.warehouse,
+            sle.posting_date,
+            ABS(sle.actual_qty) AS qty_issued,
+            sle.qty_after_transaction,
+            sle.voucher_type,
+            sle.voucher_no,
+            ABS(sle.stock_value) AS stock_value
+        FROM `tabStock Ledger Entry` sle
+        WHERE sle.item_code IN %(codes)s
+          AND sle.actual_qty < 0
+          AND sle.posting_date BETWEEN %(start)s AND %(end)s
+          AND sle.is_cancelled = 0
+          {wh_condition}
+        ORDER BY sle.posting_datetime DESC
+        LIMIT 50
+        """,
+        params,
+        as_dict=True,
+    )
+    total_issued = sum(r["qty_issued"] or 0 for r in rows)
+    return {
+        "item_filter": item_name,
+        "warehouse_filter": warehouse,
+        "period": period,
+        "from": str(start),
+        "to": str(end),
+        "issues": rows,
+        "count": len(rows),
+        "total_qty_issued": total_issued,
+    }
+
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_purchase_receipt_items(period: str, item_name: str = None, supplier: str = None, warehouse: str = None, limit: int = 30) -> dict:
+    """Get line-item detail of what was received via Purchase Receipts (GRNs).
+
+    Use when asked what specific items were received, how many units arrived
+    from a supplier, which items came in on a GRN, or receipt quantities per item.
+
+    Args:
+        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        item_name: Filter by item name or code. Optional.
+        supplier: Filter by supplier name. Optional.
+        warehouse: Filter by destination warehouse. Optional.
+        limit: Max rows. Defaults to 30.
+    """
+    start, end = get_date_range(period)
+    conditions = [
+        "pr.docstatus = 1",
+        "pr.posting_date BETWEEN %(start)s AND %(end)s",
+    ]
+    params: dict = {"start": start, "end": end, "limit": limit}
+    if item_name:
+        conditions.append("(pri.item_name LIKE %(item_name)s OR pri.item_code LIKE %(item_name)s)")
+        params["item_name"] = f"%{item_name}%"
+    if supplier:
+        conditions.append("pr.supplier LIKE %(supplier)s")
+        params["supplier"] = f"%{supplier}%"
+    if warehouse:
+        conditions.append("pri.warehouse LIKE %(warehouse)s")
+        params["warehouse"] = f"%{warehouse}%"
+
+    where = " AND ".join(conditions)
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            pr.name AS receipt_no,
+            pr.supplier,
+            pr.posting_date,
+            pri.item_code,
+            pri.item_name,
+            pri.qty AS received_qty,
+            pri.uom,
+            pri.rate,
+            pri.amount,
+            pri.warehouse
+        FROM `tabPurchase Receipt Item` pri
+        JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
+        WHERE {where}
+        ORDER BY pr.posting_date DESC
+        LIMIT %(limit)s
+        """,
+        params,
+        as_dict=True,
+    )
+    total_qty = sum(r["received_qty"] or 0 for r in rows)
+    total_value = sum(r["amount"] or 0 for r in rows)
+    return {
+        "period": period,
+        "from": str(start),
+        "to": str(end),
+        "items_received": rows,
+        "count": len(rows),
+        "total_qty": total_qty,
+        "total_value": total_value,
+    }
+
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_stock_entry_by_type(purpose: str, period: str = "this_month", warehouse: str = None, limit: int = 20) -> dict:
+    """Get stock entries filtered by purpose/type for a period.
+
+    Use when asked about specific stock operations: material issues, receipts,
+    transfers, manufacture, repack, send-to-subcontract, or write-offs.
+
+    Args:
+        purpose: Stock Entry purpose. One of: Material Issue, Material Receipt, Material Transfer,
+                 Material Transfer for Manufacture, Manufacture, Repack, Send to Subcontractor,
+                 Material Consumption for Manufacture.
+        period: One of: today, yesterday, this_week, this_month, last_month, this_year. Defaults to this_month.
+        warehouse: Filter by from_warehouse or to_warehouse (partial match). Optional.
+        limit: Max rows. Defaults to 20.
+    """
+    start, end = get_date_range(period)
+    wh_condition = "AND (se.from_warehouse LIKE %(warehouse)s OR se.to_warehouse LIKE %(warehouse)s)" if warehouse else ""
+    params = {
+        "purpose": purpose,
+        "start": start,
+        "end": end,
+        "limit": limit,
+        **({"warehouse": f"%{warehouse}%"} if warehouse else {}),
+    }
+    rows = frappe.db.sql(
+        f"""
+        SELECT
+            se.name,
+            se.posting_date,
+            se.purpose,
+            se.from_warehouse,
+            se.to_warehouse,
+            se.total_outgoing_value,
+            se.total_incoming_value,
+            COUNT(sed.name) AS line_count
+        FROM `tabStock Entry` se
+        LEFT JOIN `tabStock Entry Detail` sed ON sed.parent = se.name
+        WHERE se.docstatus = 1
+          AND se.purpose = %(purpose)s
+          AND se.posting_date BETWEEN %(start)s AND %(end)s
+          {wh_condition}
+        GROUP BY se.name
+        ORDER BY se.posting_date DESC
+        LIMIT %(limit)s
+        """,
+        params,
+        as_dict=True,
+    )
+    return {
+        "purpose": purpose,
+        "period": period,
+        "from": str(start),
+        "to": str(end),
+        "entries": rows,
+        "count": len(rows),
+    }
+
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_opening_closing_stock(period: str, warehouse: str = None, item_group: str = None) -> dict:
+    """Get opening and closing stock value for a period.
+
+    Use when asked about opening stock, closing stock, how much stock changed
+    in value over a period, or beginning vs ending inventory value.
+
+    Args:
+        period: One of: this_week, this_month, last_month, this_year.
+        warehouse: Filter to a specific warehouse. Optional.
+        item_group: Filter by item category. Optional.
+    """
+    start, end = get_date_range(period)
+    wh_condition = "AND sle.warehouse LIKE %(warehouse)s" if warehouse else ""
+    grp_condition = "AND i.item_group LIKE %(item_group)s" if item_group else ""
+    params = {
+        "start": start,
+        "end": end,
+        **({"warehouse": f"%{warehouse}%"} if warehouse else {}),
+        **({"item_group": f"%{item_group}%"} if item_group else {}),
+    }
+
+    opening = frappe.db.sql(
+        f"""
+        SELECT COALESCE(SUM(sle.stock_value_difference), 0) AS value
+        FROM `tabStock Ledger Entry` sle
+        JOIN `tabItem` i ON i.name = sle.item_code
+        WHERE sle.posting_date < %(start)s
+          AND sle.is_cancelled = 0
+          {wh_condition}
+          {grp_condition}
+        """,
+        params,
+        as_dict=True,
+    )
+    closing = frappe.db.sql(
+        f"""
+        SELECT COALESCE(SUM(sle.stock_value_difference), 0) AS value
+        FROM `tabStock Ledger Entry` sle
+        JOIN `tabItem` i ON i.name = sle.item_code
+        WHERE sle.posting_date <= %(end)s
+          AND sle.is_cancelled = 0
+          {wh_condition}
+          {grp_condition}
+        """,
+        params,
+        as_dict=True,
+    )
+    opening_value = opening[0]["value"] or 0 if opening else 0
+    closing_value = closing[0]["value"] or 0 if closing else 0
+    return {
+        "period": period,
+        "from": str(start),
+        "to": str(end),
+        "opening_stock_value": opening_value,
+        "closing_stock_value": closing_value,
+        "net_change": closing_value - opening_value,
+    }
+
+
+@mcp.tool(annotations={"readOnlyHint": True})
 def get_stock_consumption_by_item_group(period: str, warehouse: str = None) -> dict:
     """Get total stock consumed (issued) by item group for a period.
 
