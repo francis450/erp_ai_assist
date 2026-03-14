@@ -2,7 +2,7 @@
 
 import frappe
 from erp_ai_assist.mcp import mcp
-from erp_ai_assist.tools.utils import get_date_range
+from erp_ai_assist.tools.utils import get_date_range, get_currency as _currency
 
 
 @mcp.tool(annotations={"readOnlyHint": True})
@@ -41,6 +41,7 @@ def get_accounts_receivable(customer: str = None, limit: int = 20) -> dict:
     total = sum(r["total_outstanding"] for r in rows)
     total_overdue = sum(r["overdue_amount"] for r in rows)
     return {
+        "currency": _currency(),
         "receivables": rows,
         "count": len(rows),
         "total_outstanding": total,
@@ -84,6 +85,7 @@ def get_accounts_payable(supplier: str = None, limit: int = 20) -> dict:
     total = sum(r["total_outstanding"] for r in rows)
     total_overdue = sum(r["overdue_amount"] for r in rows)
     return {
+        "currency": _currency(),
         "payables": rows,
         "count": len(rows),
         "total_outstanding": total,
@@ -98,25 +100,19 @@ def get_cash_position() -> dict:
     Use when asked about available cash, bank balances, liquidity,
     or how much money is in the accounts.
     """
+    cur = _currency()
     rows = frappe.db.sql(
         """
         SELECT
             a.name AS account,
             a.account_type,
-            a.account_currency,
-            SUM(
-                CASE
-                    WHEN gl.debit_in_account_currency IS NOT NULL
-                    THEN gl.debit_in_account_currency - gl.credit_in_account_currency
-                    ELSE gl.debit - gl.credit
-                END
-            ) AS balance
+            SUM(gl.debit - gl.credit) AS balance
         FROM `tabAccount` a
         LEFT JOIN `tabGL Entry` gl
             ON gl.account = a.name AND gl.is_cancelled = 0
         WHERE a.account_type IN ('Cash', 'Bank')
           AND a.is_group = 0
-        GROUP BY a.name, a.account_type, a.account_currency
+        GROUP BY a.name, a.account_type
         ORDER BY balance DESC
         """,
         as_dict=True,
@@ -124,6 +120,7 @@ def get_cash_position() -> dict:
     total_cash = sum(r["balance"] or 0 for r in rows if r["account_type"] == "Cash")
     total_bank = sum(r["balance"] or 0 for r in rows if r["account_type"] == "Bank")
     return {
+        "currency": cur,
         "accounts": rows,
         "total_cash": total_cash,
         "total_bank": total_bank,
@@ -163,6 +160,7 @@ def get_profit_loss_summary(period: str) -> dict:
     # Income accounts: credit increases → net = credit - debit, so negate
     net_income = (-income) - expense
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -208,6 +206,7 @@ def get_expense_breakdown(period: str, limit: int = 20) -> dict:
     )
     total = sum(r["amount"] or 0 for r in rows)
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -261,6 +260,7 @@ def get_tax_summary(period: str) -> dict:
     total_output = sum(r["tax_collected"] or 0 for r in output_tax)
     total_input  = sum(r["tax_paid"]      or 0 for r in input_tax)
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -317,6 +317,7 @@ def get_journal_entries(period: str, account: str = None, limit: int = 20) -> di
         as_dict=True,
     )
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -359,6 +360,7 @@ def get_cost_center_expenses(period: str, limit: int = 20) -> dict:
         as_dict=True,
     )
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -425,6 +427,7 @@ def get_budget_vs_actual(fiscal_year: str = None, cost_center: str = None, limit
             (r["actual_amount"] or 0) / r["budget_amount"] * 100, 1
         ) if r["budget_amount"] else 0
     return {
+        "currency": _currency(),
         "fiscal_year": fiscal_year,
         "from": str(fy["year_start_date"]),
         "to": str(fy["year_end_date"]),
@@ -462,6 +465,7 @@ def get_balance_sheet_summary() -> dict:
     liabilities = summary.get("Liability", 0)
     equity      = summary.get("Equity",    0)
     return {
+        "currency": _currency(),
         "total_assets": assets,
         "total_liabilities": liabilities,
         "total_equity": equity,
@@ -524,6 +528,7 @@ def get_payment_made(period: str, supplier: str = None, limit: int = 30) -> dict
         as_dict=True,
     )
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -566,6 +571,7 @@ def get_income_by_account(period: str, limit: int = 20) -> dict:
         as_dict=True,
     )
     return {
+        "currency": _currency(),
         "period": period,
         "from": str(start),
         "to": str(end),

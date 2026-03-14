@@ -2,7 +2,7 @@
 
 import frappe
 from erp_ai_assist.mcp import mcp
-from erp_ai_assist.tools.utils import get_date_range
+from erp_ai_assist.tools.utils import get_date_range, get_currency
 
 
 @mcp.tool(annotations={"readOnlyHint": True})
@@ -44,6 +44,7 @@ def get_purchase_summary(period: str) -> dict:
         as_dict=True,
     )
     return {
+        "currency": get_currency(),
         "period": period,
         "from": str(start),
         "to": str(end),
@@ -111,6 +112,7 @@ def get_supplier_outstanding(supplier: str) -> dict:
     )
     total_outstanding = sum(r["outstanding_amount"] for r in rows)
     return {
+        "currency": get_currency(),
         "supplier_filter": supplier,
         "invoices": rows,
         "count": len(rows),
@@ -401,6 +403,7 @@ def get_overdue_payables(supplier: str = None, min_days_overdue: int = 1, limit:
         b = r["aging_bucket"]
         buckets[b] = buckets.get(b, 0) + (r["outstanding_amount"] or 0)
     return {
+        "currency": get_currency(),
         "overdue_payables": rows,
         "count": len(rows),
         "total_overdue": total_overdue,

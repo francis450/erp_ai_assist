@@ -1,6 +1,17 @@
 """Shared helpers for erp_ai_assist tools."""
 
 import datetime
+import frappe
+
+
+def get_currency() -> str:
+    """Return the default currency of the default company (e.g. 'KES')."""
+    company = frappe.defaults.get_global_default("company")
+    if company:
+        cur = frappe.db.get_value("Company", company, "default_currency")
+        if cur:
+            return cur
+    return frappe.db.get_single_value("Global Defaults", "default_currency") or "KES"
 
 
 def get_date_range(period: str):
