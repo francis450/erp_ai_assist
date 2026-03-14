@@ -13,7 +13,7 @@ def get_sales_summary(period: str) -> dict:
     this week', 'revenue last month', 'show me today's sales'.
 
     Args:
-        period: Time period. One of: today, this_week, this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     totals = frappe.db.sql(
@@ -59,7 +59,7 @@ def get_top_selling_items(period: str, limit: int = 5, by: str = "amount") -> di
     Use when asked about best sellers, most popular items, or top products.
 
     Args:
-        period: Time period. One of: this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
         limit: How many top items to return. Defaults to 5.
         by: Rank by 'qty' (quantity sold) or 'amount' (revenue). Defaults to amount.
     """

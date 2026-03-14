@@ -8,6 +8,9 @@ def get_date_range(period: str):
     today = datetime.date.today()
     if period == "today":
         return today, today
+    elif period == "yesterday":
+        yesterday = today - datetime.timedelta(days=1)
+        return yesterday, yesterday
     elif period == "this_week":
         start = today - datetime.timedelta(days=today.weekday())
         return start, today

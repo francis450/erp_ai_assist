@@ -13,7 +13,7 @@ def get_purchase_summary(period: str) -> dict:
     spend this month, or supplier payment totals.
 
     Args:
-        period: Time period. One of: today, this_week, this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     totals = frappe.db.sql(

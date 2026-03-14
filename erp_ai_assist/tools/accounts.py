@@ -139,7 +139,7 @@ def get_profit_loss_summary(period: str) -> dict:
     or business performance for a time period.
 
     Args:
-        period: Time period. One of: this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     rows = frappe.db.sql(
