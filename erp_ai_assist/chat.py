@@ -169,12 +169,19 @@ def send_message(message: str, history: str = "[]"):
     messages = _normalize_history(history_list)
     messages.append({"role": "user", "content": message})
 
+    from erp_ai_assist.tools.utils import get_currency
+    currency = get_currency()
+
     system_prompt = (
         "You are an intelligent ERP assistant embedded in an ERPNext system. "
         "You help the user quickly analyse their business data — stock levels, "
         "sales performance, purchases, accounts receivable/payable, HR data, and more. "
         "Always be concise and business-focused. "
         "When you have tool results, summarise them clearly in plain language. "
+        f"The company's default currency is {currency}. "
+        f"ALWAYS format monetary amounts using {currency} (e.g. '{currency} 1,234.50'). "
+        "Never use $ or any other currency symbol unless the tool response explicitly specifies a different currency. "
+        "Tool responses include a 'currency' field — always use that value when displaying amounts. "
         "Format numbers nicely (use commas for thousands, 2 decimal places for currency). "
         "If a question is ambiguous, make a reasonable assumption and state it briefly. "
         f"Today's date is {date.today().strftime('%d %B %Y')}."
