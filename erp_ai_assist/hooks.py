@@ -5,6 +5,9 @@ app_description = "ERP AI ASSIST"
 app_email = "contact@erpkenya.com"
 app_license = "mit"
 
+
+# Inject the chat widget JS into every desk page
+app_include_js = ["chat_widget.bundle.js"]
 # Apps
 # ------------------
 
