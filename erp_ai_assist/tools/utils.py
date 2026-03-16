@@ -25,6 +25,16 @@ def get_date_range(period: str):
     elif period == "this_week":
         start = today - datetime.timedelta(days=today.weekday())
         return start, today
+    elif period == "last_7_days":
+        return today - datetime.timedelta(days=6), today
+    elif period == "last_week":
+        # Previous full Mon–Sun calendar week
+        start_this_week = today - datetime.timedelta(days=today.weekday())
+        end_last = start_this_week - datetime.timedelta(days=1)
+        start_last = end_last - datetime.timedelta(days=6)
+        return start_last, end_last
+    elif period == "last_30_days":
+        return today - datetime.timedelta(days=29), today
     elif period == "this_month":
         return today.replace(day=1), today
     elif period == "last_month":

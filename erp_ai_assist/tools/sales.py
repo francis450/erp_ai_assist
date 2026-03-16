@@ -16,7 +16,7 @@ def get_sales_summary(period: str) -> dict:
     'how many invoices did we create yesterday'.
 
     Args:
-        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     totals = frappe.db.sql(
@@ -64,7 +64,7 @@ def get_top_selling_items(period: str, limit: int = 10, by: str = "amount") -> d
     Use when asked about best sellers, most popular items, or top products.
 
     Args:
-        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: How many top items to return. Defaults to 10.
         by: Rank by 'qty' (quantity sold) or 'amount' (revenue). Defaults to amount.
     """
@@ -228,7 +228,7 @@ def get_sales_by_item_group(period: str, limit: int = 20) -> dict:
     performance, or sales breakdown by product type.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max categories to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -270,7 +270,7 @@ def get_customer_sales_history(customer: str, period: str = "this_year") -> dict
 
     Args:
         customer: Customer name (partial match supported).
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year. Defaults to this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_year.
     """
     start, end = get_date_range(period)
     invoices = frappe.db.sql(
@@ -417,7 +417,7 @@ def get_sales_by_sales_person(period: str, limit: int = 20) -> dict:
     team performance, or sales person targets vs achievement.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max sales persons to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -456,7 +456,7 @@ def get_sales_returns(period: str, customer: str = None, limit: int = 20) -> dic
     by customers, or how much was returned.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         customer: Filter by customer name. Optional.
         limit: Max rows to return. Defaults to 20.
     """
@@ -498,7 +498,7 @@ def get_payment_collections(period: str, limit: int = 30) -> dict:
     customers, or collection performance for a period.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max rows to return. Defaults to 30.
     """
     start, end = get_date_range(period)
@@ -560,7 +560,7 @@ def get_customer_ranking(period: str, limit: int = 20) -> dict:
     or which customers drive the most revenue.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Number of customers to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -604,7 +604,7 @@ def get_quotation_conversion(period: str) -> dict:
     or how many quotations resulted in actual orders.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     totals = frappe.db.sql(
@@ -644,7 +644,7 @@ def get_order_fulfilment_rate(period: str) -> dict:
     were completed, or operational efficiency.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     rows = frappe.db.sql(
@@ -684,7 +684,7 @@ def get_new_customers(period: str, limit: int = 20) -> dict:
     new business won, or customer acquisition in a period.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max number of customers to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -929,7 +929,7 @@ def get_sales_by_territory(period: str, limit: int = 20) -> dict:
     geographic breakdown of revenue, or area-wise sales.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max territories to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -967,7 +967,7 @@ def get_cancelled_invoices(period: str, limit: int = 20) -> dict:
     or how much revenue was cancelled.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max rows to return. Defaults to 20.
     """
     start, end = get_date_range(period)

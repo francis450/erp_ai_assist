@@ -136,7 +136,7 @@ def get_profit_loss_summary(period: str) -> dict:
     or business performance for a time period.
 
     Args:
-        period: Time period. One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: Time period. One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
     rows = frappe.db.sql(
@@ -180,7 +180,7 @@ def get_expense_breakdown(period: str, limit: int = 20) -> dict:
     cost breakdown, where money went, or top expense accounts.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max accounts to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -223,7 +223,7 @@ def get_tax_summary(period: str) -> dict:
     tax paid to suppliers, or net tax payable.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
     """
     start, end = get_date_range(period)
 
@@ -280,7 +280,7 @@ def get_journal_entries(period: str, account: str = None, limit: int = 20) -> di
     or accruals posted in a given period.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         account: Filter by account name (partial match). Optional.
         limit: Max rows. Defaults to 20.
     """
@@ -335,7 +335,7 @@ def get_cost_center_expenses(period: str, limit: int = 20) -> dict:
     department spent the most, or cost allocation by business unit.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max cost centers to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -482,7 +482,7 @@ def get_payment_made(period: str, supplier: str = None, limit: int = 30) -> dict
     paid suppliers, or cash outflows to vendors.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         supplier: Filter by supplier name. Optional.
         limit: Max rows. Defaults to 30.
     """
@@ -547,7 +547,7 @@ def get_income_by_account(period: str, limit: int = 20) -> dict:
     account earned the most, or detailed revenue breakdown.
 
     Args:
-        period: One of: today, yesterday, this_week, this_month, last_month, this_year.
+        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
         limit: Max accounts to return. Defaults to 20.
     """
     start, end = get_date_range(period)
