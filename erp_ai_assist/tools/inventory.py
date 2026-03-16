@@ -147,16 +147,16 @@ def get_warehouse_summary() -> dict:
             b.warehouse,
             COUNT(DISTINCT b.item_code) AS item_count,
             SUM(b.actual_qty) AS total_qty,
-            SUM(b.actual_qty * COALESCE(item.valuation_rate, 0)) AS stock_value
+            SUM(b.stock_value) AS stock_value
         FROM `tabBin` b
-        JOIN `tabItem` item ON item.name = b.item_code
         WHERE b.actual_qty > 0
         GROUP BY b.warehouse
         ORDER BY stock_value DESC
         """,
         as_dict=True,
     )
-    return {"warehouses": rows, "count": len(rows)}
+    total_value = sum(r["stock_value"] or 0 for r in rows)
+    return {"warehouses": rows, "count": len(rows), "total_stock_value": total_value}
 
 
 @mcp.tool(annotations={"readOnlyHint": True})
@@ -269,7 +269,7 @@ def get_slow_moving_items(days: int = 60, warehouse: str = None, limit: int = 20
             i.item_group,
             b.warehouse,
             b.actual_qty,
-            (b.actual_qty * COALESCE(i.valuation_rate, 0)) AS stock_value,
+            b.stock_value AS stock_value,
             MAX(sle.posting_date) AS last_movement_date,
             DATEDIFF(CURDATE(), MAX(sle.posting_date)) AS days_since_movement
         FROM `tabBin` b
@@ -315,7 +315,7 @@ def get_stock_valuation_by_group(warehouse: str = None) -> dict:
             i.item_group,
             COUNT(DISTINCT b.item_code) AS item_count,
             SUM(b.actual_qty) AS total_qty,
-            SUM(b.actual_qty * COALESCE(i.valuation_rate, 0)) AS stock_value
+            SUM(b.stock_value) AS stock_value
         FROM `tabBin` b
         JOIN `tabItem` i ON i.name = b.item_code
         WHERE b.actual_qty > 0
@@ -583,7 +583,7 @@ def get_top_stocked_items(warehouse: str = None, by: str = "value", limit: int =
             b.warehouse,
             b.actual_qty,
             i.stock_uom,
-            (b.actual_qty * COALESCE(i.valuation_rate, 0)) AS stock_value
+            b.stock_value AS stock_value
         FROM `tabBin` b
         JOIN `tabItem` i ON i.name = b.item_code
         WHERE b.actual_qty > 0
@@ -682,7 +682,7 @@ def get_stock_ageing(warehouse: str = None, limit: int = 20) -> dict:
             MIN(sle.posting_date) AS oldest_receipt_date,
             DATEDIFF(CURDATE(), MIN(sle.posting_date)) AS age_days,
             b.actual_qty AS current_qty,
-            (b.actual_qty * COALESCE(i.valuation_rate, 0)) AS stock_value
+            b.stock_value AS stock_value
         FROM `tabStock Ledger Entry` sle
         JOIN `tabItem` i ON i.name = sle.item_code
         JOIN `tabBin` b

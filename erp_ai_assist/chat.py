@@ -9,7 +9,16 @@ import frappe
 import requests
 from frappe import _
 from frappe.utils import now_datetime
-from datetime import date
+from datetime import date, datetime
+
+
+def _json_dumps(obj) -> str:
+    """json.dumps that serialises date/datetime objects to ISO strings."""
+    def _default(o):
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
+        raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+    return json.dumps(obj, default=_default)
 
 
 # ─── Tool registry (via MCP) ──────────────────────────────────────────────────
@@ -193,7 +202,7 @@ def _save_chat_turn(session_id: str, new_messages: list, model: str):
                 chat_msg.tool_name = msg.get("name")
                 chat_msg.tool_call_id = msg.get("tool_call_id")
             elif role == "assistant" and msg.get("tool_calls"):
-                chat_msg.tool_input = json.dumps(msg.get("tool_calls"))
+                chat_msg.tool_input = _json_dumps(msg.get("tool_calls"))
 
             chat_msg.insert(ignore_permissions=True)
 
@@ -272,7 +281,7 @@ def send_message(message: str, history: str = "[]", session_id: str = ""):
                     "role": "tool",
                     "tool_call_id": call.get("id"),
                     "name": fn_name,
-                    "content": json.dumps(result),
+                    "content": _json_dumps(result),
                 })
             continue
 
