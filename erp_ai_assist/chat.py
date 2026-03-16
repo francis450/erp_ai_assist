@@ -26,11 +26,12 @@ def _json_dumps(obj) -> str:
 def _load_tools():
     """Import all tool modules so @mcp.tool() decorators register them."""
     from erp_ai_assist.mcp import mcp  # noqa — import triggers registration
-    import erp_ai_assist.tools.inventory  # noqa
-    import erp_ai_assist.tools.sales      # noqa
-    import erp_ai_assist.tools.purchase   # noqa
-    import erp_ai_assist.tools.accounts   # noqa
-    import erp_ai_assist.tools.hr         # noqa
+    import erp_ai_assist.tools.inventory    # noqa
+    import erp_ai_assist.tools.sales        # noqa
+    import erp_ai_assist.tools.purchase     # noqa
+    import erp_ai_assist.tools.accounts     # noqa
+    import erp_ai_assist.tools.hr           # noqa
+    import erp_ai_assist.tools.technicians  # noqa
     return mcp
 
 
@@ -247,10 +248,13 @@ def send_message(message: str, history: str = "[]", session_id: str = ""):
         "Format numbers nicely (use commas for thousands, 2 decimal places for currency). "
         "If a question is ambiguous, make a reasonable assumption and state it briefly. "
         f"Today's date is {date.today().strftime('%d %B %Y')} ({date.today().isoformat()}). "
-        "When a tool requires a 'period' argument, choose the most natural fit: "
-        "use named shortcuts (today, this_week, this_month, etc.) for common periods, "
-        "use last_N_days (e.g. last_5_days, last_30_days) for any rolling N-day window, "
-        "or use YYYY-MM-DD:YYYY-MM-DD for specific date ranges like 'from 1 March to 10 March'."
+        "When a tool requires a 'period' argument use these rules strictly: "
+        "- 'today' or 'this week' or 'current week' → this_week or today. "
+        "- 'last week', 'past week', 'last one week', 'last 7 days', 'past 7 days' → last_7_days. "
+        "- 'last N days' / 'past N days' / 'last N weeks' → last_N_days (e.g. last_14_days for 2 weeks). "
+        "- 'this month' → this_month. 'last month' → last_month. 'this year' → this_year. "
+        "- Specific range like 'from 1 March to 10 March' → YYYY-MM-DD:YYYY-MM-DD. "
+        "NEVER use this_week when the user says 'last week' or 'past week' — those mean the rolling 7 days."
     )
 
     # Agentic loop — max 8 iterations to handle multi-tool workflows
