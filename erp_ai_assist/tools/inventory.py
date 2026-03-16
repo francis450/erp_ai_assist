@@ -205,7 +205,7 @@ def get_stock_in_out_summary(period: str, warehouse: str = None) -> dict:
     total issues, or net stock change over a time period.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         warehouse: Filter to a specific warehouse. Optional.
     """
     start, end = get_date_range(period)
@@ -436,7 +436,7 @@ def get_goods_received(period: str, supplier: str = None, limit: int = 20) -> di
     goods received from a supplier, or recent purchase receipts.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         supplier: Filter by supplier name (partial match). Optional.
         limit: Max rows to return. Defaults to 20.
     """
@@ -474,7 +474,7 @@ def get_stock_transfers(period: str, from_warehouse: str = None, to_warehouse: s
     or which warehouse sent/received stock.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         from_warehouse: Filter by source warehouse (partial match). Optional.
         to_warehouse: Filter by destination warehouse (partial match). Optional.
         limit: Max rows to return. Defaults to 20.
@@ -760,7 +760,7 @@ def get_stock_additions(item_name: str, warehouse: str = None, period: str = "th
     Args:
         item_name: Partial or full item name or item code.
         warehouse: Specific warehouse name (partial match). Optional — omit for all warehouses.
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
     """
     start, end = get_date_range(period)
     items = _resolve_item(item_name, limit=3)
@@ -822,7 +822,7 @@ def get_stock_issues(item_name: str, warehouse: str = None, period: str = "this_
     Args:
         item_name: Partial or full item name or item code.
         warehouse: Specific warehouse name (partial match). Optional.
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
     """
     start, end = get_date_range(period)
     items = _resolve_item(item_name, limit=3)
@@ -882,7 +882,7 @@ def get_purchase_receipt_items(period: str, item_name: str = None, supplier: str
     from a supplier, which items came in on a GRN, or receipt quantities per item.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         item_name: Filter by item name or code. Optional.
         supplier: Filter by supplier name. Optional.
         warehouse: Filter by destination warehouse. Optional.
@@ -951,7 +951,7 @@ def get_stock_entry_by_type(purpose: str, period: str = "this_month", warehouse:
         purpose: Stock Entry purpose. One of: Material Issue, Material Receipt, Material Transfer,
                  Material Transfer for Manufacture, Manufacture, Repack, Send to Subcontractor,
                  Material Consumption for Manufacture.
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         warehouse: Filter by from_warehouse or to_warehouse (partial match). Optional.
         limit: Max rows. Defaults to 20.
     """
@@ -1066,7 +1066,7 @@ def get_stock_consumption_by_item_group(period: str, warehouse: str = None) -> d
     are being used the most, or issue analysis by product group.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         warehouse: Filter to a specific warehouse. Optional.
     """
     start, end = get_date_range(period)

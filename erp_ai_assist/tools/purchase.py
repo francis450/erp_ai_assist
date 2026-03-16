@@ -13,7 +13,7 @@ def get_purchase_summary(period: str) -> dict:
     spend this month, or supplier payment totals.
 
     Args:
-        period: Time period. One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Time period. Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
     """
     start, end = get_date_range(period)
     totals = frappe.db.sql(
@@ -154,7 +154,7 @@ def get_purchase_by_item_group(period: str, limit: int = 20) -> dict:
     procurement breakdown by product type, or category-level spend.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         limit: Max categories. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -194,7 +194,7 @@ def get_supplier_ranking(period: str, limit: int = 20) -> dict:
     supplier spend analysis, or vendor ranking.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         limit: Number of suppliers to return. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -268,7 +268,7 @@ def get_purchase_returns(period: str, supplier: str = None, limit: int = 20) -> 
     purchase returns, or how much stock was sent back.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         supplier: Filter by supplier name. Optional.
         limit: Max rows. Defaults to 20.
     """
@@ -419,7 +419,7 @@ def get_top_purchased_items(period: str, limit: int = 10, by: str = "amount") ->
     or which products have the highest procurement spend.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         limit: How many items to return. Defaults to 10.
         by: Rank by 'qty' (quantity bought) or 'amount' (spend). Defaults to amount.
     """
@@ -458,7 +458,7 @@ def get_purchase_order_vs_received(period: str, supplier: str = None, limit: int
     receiving gaps, or how much of each PO has arrived.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD.
         supplier: Filter by supplier name. Optional.
         limit: Max rows. Defaults to 20.
     """
@@ -504,7 +504,7 @@ def get_requisition_stats(period: str = "this_month", department: str = None) ->
     department raises the most requests, or how quickly MRs are being processed.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         department: Filter by department name (partial match). Optional.
     """
     start, end = get_date_range(period)
@@ -566,7 +566,7 @@ def get_rfq_summary(period: str = "this_month", supplier: str = None, limit: int
     responded to RFQs, or quote request status.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         supplier: Filter by supplier name. Optional.
         limit: Max rows. Defaults to 20.
     """
@@ -761,7 +761,7 @@ def get_price_variance(period: str = "this_month", supplier: str = None, limit: 
     over-billing by suppliers, or purchase price variance.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         supplier: Filter by supplier name. Optional.
         limit: Max line items to return. Defaults to 20.
     """
@@ -868,7 +868,7 @@ def get_three_way_match_exceptions(period: str = "this_month", limit: int = 20) 
     invoices not matching POs or GRNs, or procurement audit exceptions.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         limit: Max rows. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -964,7 +964,7 @@ def get_landed_cost_summary(period: str = "this_month", limit: int = 20) -> dict
     additional procurement costs, or total cost of goods received.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         limit: Max rows. Defaults to 20.
     """
     start, end = get_date_range(period)
@@ -1000,7 +1000,7 @@ def get_purchase_invoice_vs_order(period: str = "this_month", supplier: str = No
     unapproved purchases, or billing compliance.
 
     Args:
-        period: One of: today, yesterday, this_week, last_7_days, last_week, last_30_days, this_month, last_month, this_year. Defaults to this_month.
+        period: Named: today, yesterday, this_week, last_week, this_month, last_month, this_year. Rolling window: last_N_days (e.g. last_7_days, last_14_days, last_90_days). Explicit range: YYYY-MM-DD:YYYY-MM-DD. Defaults to this_month.
         supplier: Filter by supplier name. Optional.
         limit: Max rows. Defaults to 20.
     """

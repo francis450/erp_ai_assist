@@ -246,7 +246,11 @@ def send_message(message: str, history: str = "[]", session_id: str = ""):
         "Tool responses include a 'currency' field — always use that value when displaying amounts. "
         "Format numbers nicely (use commas for thousands, 2 decimal places for currency). "
         "If a question is ambiguous, make a reasonable assumption and state it briefly. "
-        f"Today's date is {date.today().strftime('%d %B %Y')}."
+        f"Today's date is {date.today().strftime('%d %B %Y')} ({date.today().isoformat()}). "
+        "When a tool requires a 'period' argument, choose the most natural fit: "
+        "use named shortcuts (today, this_week, this_month, etc.) for common periods, "
+        "use last_N_days (e.g. last_5_days, last_30_days) for any rolling N-day window, "
+        "or use YYYY-MM-DD:YYYY-MM-DD for specific date ranges like 'from 1 March to 10 March'."
     )
 
     # Agentic loop — max 8 iterations to handle multi-tool workflows
