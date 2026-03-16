@@ -8,6 +8,7 @@ import json
 import frappe
 import requests
 from frappe import _
+from frappe.utils import now_datetime
 from datetime import date
 
 
@@ -150,8 +151,59 @@ def _call_grok_chat(api_key: str, model: str, system_prompt: str, messages: list
 
 # ─── Main whitelisted API method ──────────────────────────────────────────────
 
+def _save_chat_turn(session_id: str, new_messages: list, model: str):
+    """Persist the current turn's messages to AI Chat Session / AI Chat Message."""
+    if not session_id:
+        return
+    try:
+        now = now_datetime()
+
+        # Upsert session
+        if frappe.db.exists("AI Chat Session", session_id):
+            session = frappe.get_doc("AI Chat Session", session_id)
+        else:
+            session = frappe.new_doc("AI Chat Session")
+            session.session_id = session_id
+            session.user = frappe.session.user
+            session.model = model
+            session.started_at = now
+            # Use first user message as title (max 120 chars)
+            first_user = next((m for m in new_messages if m.get("role") == "user"), None)
+            if first_user:
+                session.title = (first_user.get("content") or "")[:120]
+
+        user_and_assistant = [m for m in new_messages if m.get("role") in ("user", "assistant")]
+        tool_msgs = [m for m in new_messages if m.get("role") == "tool"]
+        session.message_count = (session.message_count or 0) + len(user_and_assistant)
+        session.tool_call_count = (session.tool_call_count or 0) + len(tool_msgs)
+        session.last_active = now
+        session.save(ignore_permissions=True)
+
+        # Save individual messages
+        for idx, msg in enumerate(new_messages):
+            role = msg.get("role")
+            chat_msg = frappe.new_doc("AI Chat Message")
+            chat_msg.session = session.name
+            chat_msg.role = role
+            chat_msg.content = msg.get("content") or ""
+            chat_msg.timestamp = now
+            chat_msg.iteration = idx
+
+            if role == "tool":
+                chat_msg.tool_name = msg.get("name")
+                chat_msg.tool_call_id = msg.get("tool_call_id")
+            elif role == "assistant" and msg.get("tool_calls"):
+                chat_msg.tool_input = json.dumps(msg.get("tool_calls"))
+
+            chat_msg.insert(ignore_permissions=True)
+
+        frappe.db.commit()
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "AI Chat Storage Error")
+
+
 @frappe.whitelist()
-def send_message(message: str, history: str = "[]"):
+def send_message(message: str, history: str = "[]", session_id: str = ""):
     """
     Receives a user chat message + conversation history.
     Runs the agentic Grok loop and returns the final text response.
@@ -167,6 +219,7 @@ def send_message(message: str, history: str = "[]"):
 
     history_list = json.loads(history) if history else []
     messages = _normalize_history(history_list)
+    prior_count = len(messages)  # snapshot before this turn
     messages.append({"role": "user", "content": message})
 
     from erp_ai_assist.tools.utils import get_currency
@@ -223,9 +276,12 @@ def send_message(message: str, history: str = "[]"):
                 })
             continue
 
-        return {"response": assistant_msg["content"] or "", "history": messages}
+        _save_chat_turn(session_id, messages[prior_count:], model)
+        return {"response": assistant_msg["content"] or "", "history": messages, "session_id": session_id}
 
+    _save_chat_turn(session_id, messages[prior_count:], model)
     return {
         "response": "I wasn't able to complete that request. Please try again.",
         "history": messages,
+        "session_id": session_id,
     }

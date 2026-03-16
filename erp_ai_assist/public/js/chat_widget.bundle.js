@@ -16,6 +16,18 @@
   let chatHistory = [];
   let isOpen = false;
   let isLoading = false;
+  let sessionId = _newSessionId();
+
+  function _newSessionId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for older browsers
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  }
 
   // ── Init ────────────────────────────────────────────────────────────────────
   function initAssistant() {
@@ -164,7 +176,8 @@
       method: "erp_ai_assist.chat.send_message",
       args: {
         message: message,
-        history: JSON.stringify(chatHistory)
+        history: JSON.stringify(chatHistory),
+        session_id: sessionId
       },
       callback: function (r) {
         setLoading(false);
@@ -235,6 +248,7 @@
   // ── Clear chat ────────────────────────────────────────────────────────────────
   function clearChat() {
     chatHistory = [];
+    sessionId = _newSessionId();
     const messages = document.getElementById("ai-messages");
     messages.innerHTML = `
       <div class="ai-welcome">

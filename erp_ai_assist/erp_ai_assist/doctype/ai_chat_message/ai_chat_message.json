@@ -1,0 +1,115 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-03-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "session",
+  "role",
+  "timestamp",
+  "iteration",
+  "cb1",
+  "tool_name",
+  "tool_call_id",
+  "sb1",
+  "content",
+  "sb2",
+  "tool_input"
+ ],
+ "fields": [
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "label": "Session",
+   "options": "AI Chat Session",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Select",
+   "label": "Role",
+   "options": "user\nassistant\ntool",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "timestamp",
+   "fieldtype": "Datetime",
+   "label": "Timestamp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "iteration",
+   "fieldtype": "Int",
+   "label": "Loop Iteration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tool_name",
+   "fieldtype": "Data",
+   "label": "Tool Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tool_call_id",
+   "fieldtype": "Data",
+   "label": "Tool Call ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Long Text",
+   "label": "Content",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Tool Detail"
+  },
+  {
+   "fieldname": "tool_input",
+   "fieldtype": "Long Text",
+   "label": "Tool Input / Tool Calls JSON",
+   "read_only": 1,
+   "depends_on": "eval:in_list(['assistant','tool'], doc.role)"
+  }
+ ],
+ "links": [],
+ "modified": "2026-03-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Erp Ai Assist",
+ "name": "AI Chat Message",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "timestamp",
+ "sort_order": "ASC",
+ "track_changes": 0
+}
